@@ -1,0 +1,10 @@
+select user_id, sum(quantity) as quantity
+from orders o 
+join order_line ol using(order_id)
+join products p using(product_id)
+where order_date BETWEEN '2017-08-01' AND '2017-08-15'
+and 
+category = 'Продукция для животных'
+and product != 'Корм Kitekat для кошек, с кроликом в соусе, 85 г'
+group by user_id
+having count(quantity) = 2

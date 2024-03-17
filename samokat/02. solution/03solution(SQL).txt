@@ -1,0 +1,59 @@
+Топ-5 товаров
+
+|product                                                      |order_count|
+|-------------------------------------------------------------|-----------|
+|Корм Kitekat для кошек, с кроликом в соусе, 85 г             |1 462      |
+|Йогурт Чудо питьевой, с вишней и черешней, 2,4%, 270 г       |1 033      |
+|Крабовые палочки Бухта Изобилия имитация, замороженные, 200 г|992        |
+|Икра трески Санта Бремор Pate, деликатесная, 90 г            |982        |
+|Свекла вареная очищенная, 500 г                              |946        |
+
+
+
+---Используя CTE (дольше считается)
+WITH min_orders AS (
+    SELECT user_id, MIN(order_id) as min_order_id
+    FROM orders
+    join warehouses w using(warehouse_id)
+    WHERE city = 'Санкт-Петербург'
+    AND order_date BETWEEN '2017-08-15' AND '2017-08-30'
+    GROUP BY user_id
+)
+
+SELECT product, COUNT(ol.product_id) as order_count
+FROM orders o
+JOIN order_line ol USING(order_id)
+JOIN products p USING(product_id)
+JOIN warehouses w USING(warehouse_id)
+JOIN min_orders mo ON o.user_id = mo.user_id AND o.order_id = mo.min_order_id
+WHERE w.city = 'Санкт-Петербург'
+AND o.order_date BETWEEN '2017-08-15' AND '2017-08-30'
+GROUP BY product
+ORDER BY order_count DESC
+LIMIT 5;
+
+---Используя join (быстрее считается)
+
+SELECT product, COUNT(product_id) as order_count
+FROM orders
+join order_line ol using(order_id)
+join products p using(product_id)
+join warehouses w using(warehouse_id)
+JOIN (
+    SELECT MIN(order_id) as min_order_id, user_id
+    FROM orders
+	join warehouses w using(warehouse_id)
+    WHERE city = 'Санкт-Петербург'  
+    AND order_date BETWEEN '2017-08-15' AND '2017-08-30' 
+    GROUP BY user_id
+) as min_orders ON orders.order_id = min_orders.min_order_id
+WHERE city = 'Санкт-Петербург'
+AND order_date BETWEEN '2017-08-15' AND '2017-08-30'
+GROUP BY product
+ORDER BY order_count DESC
+LIMIT 5
+
+
+
+
+
